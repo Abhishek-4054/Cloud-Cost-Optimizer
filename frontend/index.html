@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cloud Cost Optimizer v2</title>
+  <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600;700&family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:#f8f9fa; --surface:#fff; --surface2:#f1f3f4; --border:#e0e0e0;
+      --text:#202124; --text2:#5f6368; --hint:#9aa0a6;
+      --blue:#1a73e8; --blue-l:#e8f0fe;
+      --green:#137333; --green-l:#e6f4ea;
+      --red:#c5221f; --red-l:#fce8e6;
+      --yellow:#f9ab00; --yellow-l:#fef7e0;
+      --purple:#7b2ff7; --purple-l:#f3e8ff;
+      --teal:#007b83; --teal-l:#e0f7fa;
+      --s1:0 1px 2px rgba(60,64,67,.3),0 1px 3px 1px rgba(60,64,67,.15);
+      --s2:0 1px 3px rgba(60,64,67,.3),0 4px 8px 3px rgba(60,64,67,.15);
+      --r:8px; --rl:12px; --rxl:16px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Roboto',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+    /* Header */
+    header{background:var(--surface);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,.08);}
+    .logo{width:40px;height:40px;background:var(--blue);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;}
+    .h-title{font-family:'Google Sans',sans-serif;font-size:18px;font-weight:500;margin-left:12px;}
+    .badge{font-size:11px;font-weight:500;padding:3px 8px;border-radius:100px;background:var(--blue-l);color:var(--blue);}
+    .badge-g{background:var(--green-l);color:var(--green);}
+    .badge-p{background:var(--purple-l);color:var(--purple);}
+
+    /* Layout */
+    main{max-width:1280px;margin:0 auto;padding:24px 24px 64px;}
+
+    /* Card */
+    .card{background:var(--surface);border-radius:var(--rl);box-shadow:var(--s1);}
+    .card-h{padding:20px 24px 0;font-family:'Google Sans',sans-serif;font-size:15px;font-weight:500;display:flex;align-items:center;gap:8px;}
+    .card-b{padding:16px 24px 24px;}
+    .gap{margin-top:16px;}
+
+    /* Form */
+    .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px;}
+    .fg{display:flex;flex-direction:column;gap:6px;}
+    label{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;}
+    input,select{height:44px;padding:0 14px;border:1px solid var(--border);border-radius:var(--r);font-family:'Roboto',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s,box-shadow .15s;appearance:none;}
+    input:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(26,115,232,.2);}
+    select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='%235f6368'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:36px;}
+
+    /* Service selector */
+    .svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px;}
+    .svc-card{border:2px solid var(--border);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s;background:var(--surface);display:flex;align-items:center;gap:10px;}
+    .svc-card:hover{border-color:var(--blue);background:var(--blue-l);}
+    .svc-card.active{border-color:var(--blue);background:var(--blue-l);}
+    .svc-icon{font-size:20px;flex-shrink:0;}
+    .svc-name{font-size:13px;font-weight:500;color:var(--text);}
+    .svc-desc{font-size:11px;color:var(--text2);margin-top:2px;}
+
+    /* Priority tags */
+    .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+    .tag{padding:6px 14px;border-radius:100px;border:1px solid var(--border);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .15s;user-select:none;}
+    .tag:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l);}
+    .tag.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+    /* Advanced config */
+    .adv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-top:12px;padding:16px;background:var(--surface2);border-radius:var(--r);}
+
+    /* Button */
+    .btn{height:44px;padding:0 24px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-family:'Google Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:background .15s,box-shadow .15s;box-shadow:var(--s1);}
+    .btn:hover{background:#1557b0;box-shadow:var(--s2);}
+    .btn:disabled{background:var(--hint);cursor:not-allowed;box-shadow:none;}
+    .btn-sec{background:var(--surface);color:var(--blue);border:1px solid var(--blue);}
+    .btn-sec:hover{background:var(--blue-l);}
+
+    /* Spinner */
+    .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    /* Loading */
+    #loading{display:none;background:var(--surface);border-radius:var(--rl);box-shadow:var(--s1);padding:48px 24px;text-align:center;margin-top:24px;}
+    .big-spin{width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto 20px;}
+    .step-list{max-width:360px;margin:20px auto 0;text-align:left;}
+    .step-item{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--r);font-size:13px;color:var(--hint);transition:all .3s;}
+    .step-item.active{background:var(--blue-l);color:var(--blue);}
+    .step-item.done{color:var(--green);}
+    .sdot{width:8px;height:8px;border-radius:50%;background:var(--border);flex-shrink:0;}
+    .step-item.active .sdot{background:var(--blue);}
+    .step-item.done .sdot{background:var(--green);}
+
+    /* Error */
+    .err-box{display:none;background:var(--red-l);border:1px solid #f5c6c5;border-radius:var(--rl);padding:16px 20px;margin-top:24px;gap:12px;}
+
+    /* Stats */
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;}
+    @media(max-width:700px){.stats{grid-template-columns:repeat(2,1fr);}}
+    .stat{background:var(--surface);border-radius:var(--rl);box-shadow:var(--s1);padding:18px 20px;}
+    .stat-l{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px;}
+    .stat-v{font-family:'Google Sans',sans-serif;font-size:24px;font-weight:700;color:var(--text);}
+    .stat-s{font-size:12px;color:var(--hint);margin-top:3px;}
+    .c-green{color:var(--green);} .c-blue{color:var(--blue);} .c-red{color:var(--red);} .c-yellow{color:var(--yellow);}
+
+    /* Tabs */
+    .tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px;}
+    .tab{padding:12px 20px;font-size:14px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+    .tab:hover{color:var(--blue);background:var(--blue-l);}
+    .tab.active{color:var(--blue);border-bottom-color:var(--blue);}
+    .tab-panel{display:none;}
+    .tab-panel.active{display:block;}
+
+    /* Provider cards */
+    .p-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;}
+    @media(max-width:900px){.p-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:600px){.p-grid{grid-template-columns:repeat(2,1fr);}}
+    .p-card{background:var(--surface);border-radius:var(--rl);box-shadow:var(--s1);padding:18px 16px;border:2px solid transparent;transition:all .2s;}
+    .p-card:hover{box-shadow:var(--s2);transform:translateY(-1px);}
+    .p-card.best{border-color:var(--green);box-shadow:0 0 0 1px var(--green),var(--s2);}
+    .p-card.runner{border-color:var(--blue);}
+    .p-badge{font-size:11px;font-weight:600;padding:3px 8px;border-radius:100px;margin-bottom:12px;display:inline-block;}
+    .pb-best{background:var(--green-l);color:var(--green);}
+    .pb-runner{background:var(--blue-l);color:var(--blue);}
+    .pb-other{visibility:hidden;}
+    .p-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:10px;}
+    .p-name{font-family:'Google Sans',sans-serif;font-size:13px;font-weight:600;margin-bottom:8px;}
+    .p-price{font-family:'Google Sans',sans-serif;font-size:28px;font-weight:700;line-height:1;margin-bottom:2px;}
+    .p-unit{font-size:11px;color:var(--hint);margin-bottom:14px;}
+    .p-rows{border-top:1px solid var(--border);padding-top:12px;display:flex;flex-direction:column;gap:5px;}
+    .p-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text2);}
+    .p-row span:last-child{font-weight:500;color:var(--text);}
+    .p-unavail{font-size:11px;color:var(--hint);font-style:italic;}
+
+    /* AI Section */
+    .ai-card{background:var(--surface);border-radius:var(--rl);box-shadow:var(--s1);border-left:4px solid var(--blue);}
+    .ai-h{padding:20px 24px 16px;display:flex;align-items:flex-start;gap:16px;border-bottom:1px solid var(--border);}
+    .ai-ico{width:48px;height:48px;background:var(--blue-l);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+    .ai-b{padding:20px 24px;}
+    .ai-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
+    @media(max-width:600px){.ai-grid2{grid-template-columns:1fr;}}
+    .ai-pick{padding:16px;border-radius:var(--r);background:var(--surface2);}
+    .ai-pick-l{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.5px;color:var(--hint);margin-bottom:6px;}
+    .ai-pick-n{font-family:'Google Sans',sans-serif;font-size:16px;font-weight:600;margin-bottom:4px;}
+    .ai-pick-r{font-size:12px;color:var(--text2);line-height:1.5;}
+
+    /* Well-Architected */
+    .wa-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-top:12px;}
+    .wa-item{padding:14px;border-radius:var(--r);border-left:3px solid var(--blue);background:var(--blue-l);}
+    .wa-title{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);margin-bottom:6px;}
+    .wa-text{font-size:12px;color:var(--text);line-height:1.5;}
+
+    /* Multi-cloud */
+    .mc-service{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:8px;background:var(--surface);}
+    .mc-cat{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);width:100px;flex-shrink:0;padding-top:2px;}
+    .mc-body{flex:1;}
+    .mc-provider{font-family:'Google Sans',sans-serif;font-size:14px;font-weight:600;color:var(--text);}
+    .mc-service-name{font-size:13px;color:var(--text2);margin-top:2px;}
+    .mc-why{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic;}
+    .mc-cost{font-family:'Google Sans',sans-serif;font-size:15px;font-weight:600;color:var(--green);flex-shrink:0;}
+
+    /* Tips */
+    .tip{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r);background:var(--green-l);margin-bottom:6px;font-size:13px;color:#137333;}
+    .warn{background:var(--yellow-l);color:#b06000;}
+
+    /* Table */
+    table{width:100%;border-collapse:collapse;}
+    thead tr{border-bottom:2px solid var(--border);}
+    th{padding:12px 14px;text-align:right;font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--text2);white-space:nowrap;}
+    th:first-child{text-align:left;}
+    tbody tr{border-bottom:1px solid var(--border);transition:background .1s;}
+    tbody tr:last-child{border-bottom:none;}
+    tbody tr:hover{background:var(--surface2);}
+    td{padding:13px 14px;font-size:13px;color:var(--text);text-align:right;}
+    td:first-child{text-align:left;}
+    .td-total{font-weight:600;font-size:15px;}
+    .chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:100px;font-size:11px;font-weight:500;}
+    .chip-live{background:var(--green-l);color:var(--green);}
+    .chip-pub{background:var(--yellow-l);color:#b06000;}
+    .dot{width:6px;height:6px;border-radius:50%;}
+    .dot-g{background:var(--green);}
+    .dot-y{background:var(--yellow);}
+
+    /* Service winner */
+    .sw-item{display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:var(--r);border:1px solid var(--border);margin-bottom:8px;}
+    .sw-cat{font-size:13px;font-weight:500;color:var(--text);width:120px;flex-shrink:0;}
+    .sw-win{font-family:'Google Sans',sans-serif;font-size:13px;font-weight:600;color:var(--green);}
+    .sw-cost{font-size:12px;color:var(--text2);}
+    .sw-insight{font-size:12px;color:var(--text2);flex:1;}
+
+    /* Section label */
+    .sec-label{font-family:'Google Sans',sans-serif;font-size:15px;font-weight:500;color:var(--text);margin-bottom:12px;margin-top:24px;display:flex;align-items:center;gap:8px;}
+
+    .divider{height:1px;background:var(--border);margin:20px 0;}
+    .failed-notice{margin-top:12px;padding:10px 16px;background:var(--red-l);border-radius:var(--r);font-size:12px;color:var(--red);}
+  </style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;">
+    <div class="logo">☁️</div>
+    <span class="h-title" style="margin-left:12px;">Cloud Cost Optimizer</span>
+    <span class="badge" style="margin-left:10px;">v2 · Live Pricing</span>
+    <span class="badge badge-p" style="margin-left:6px;">All Services</span>
+  </div>
+  <div style="font-size:13px;color:var(--text2);display:flex;align-items:center;gap:6px;">
+    🤖 <span>Bedrock Claude · Multi-Cloud AI</span>
+  </div>
+</header>
+
+<main>
+
+  <!-- Form -->
+  <div class="card">
+    <div class="card-h">📋 Application Requirements</div>
+    <div class="card-b">
+
+      <div class="form-grid">
+        <div class="fg"><label>Application Type</label>
+          <input id="app_type" type="text" placeholder="web app, ML pipeline, API…" value="web app" /></div>
+        <div class="fg"><label>Concurrent Users</label>
+          <input id="users" type="number" value="500" min="1" /></div>
+        <div class="fg"><label>Storage (GB)</label>
+          <input id="storage_gb" type="number" value="100" min="1" /></div>
+        <div class="fg"><label>Database</label>
+          <select id="database">
+            <option>PostgreSQL</option><option>MySQL</option><option>MongoDB</option>
+          </select></div>
+        <div class="fg"><label>Region</label>
+          <select id="region">
+            <option value="ap-south-1">🇮🇳 Mumbai</option>
+            <option value="us-east-1">🇺🇸 N. Virginia</option>
+            <option value="us-west-2">🇺🇸 Oregon</option>
+            <option value="eu-west-1">🇪🇺 Ireland</option>
+            <option value="ap-southeast-1">🇸🇬 Singapore</option>
+          </select></div>
+        <div class="fg"><label>Monthly Budget ($)</label>
+          <input id="budget_usd" type="number" value="500" min="1" /></div>
+      </div>
+
+      <!-- Service Selector -->
+      <div style="margin-top:20px;">
+        <label>Select Services to Compare</label>
+        <div class="svc-grid" id="svcGrid">
+          <div class="svc-card active" data-svc="compute">
+            <span class="svc-icon">💻</span>
+            <div><div class="svc-name">Compute</div><div class="svc-desc">EC2, VMs, Droplets</div></div>
+          </div>
+          <div class="svc-card active" data-svc="database">
+            <span class="svc-icon">🗄️</span>
+            <div><div class="svc-name">Database</div><div class="svc-desc">RDS, Cloud SQL, Cosmos</div></div>
+          </div>
+          <div class="svc-card active" data-svc="storage">
+            <span class="svc-icon">📦</span>
+            <div><div class="svc-name">Storage</div><div class="svc-desc">S3, Blob, GCS</div></div>
+          </div>
+          <div class="svc-card active" data-svc="cdn">
+            <span class="svc-icon">🌐</span>
+            <div><div class="svc-name">CDN</div><div class="svc-desc">CloudFront, Azure CDN</div></div>
+          </div>
+          <div class="svc-card" data-svc="ai_ml">
+            <span class="svc-icon">🤖</span>
+            <div><div class="svc-name">AI / ML</div><div class="svc-desc">Bedrock, Vertex, OpenAI</div></div>
+          </div>
+          <div class="svc-card" data-svc="serverless">
+            <span class="svc-icon">⚡</span>
+            <div><div class="svc-name">Serverless</div><div class="svc-desc">Lambda, Functions</div></div>
+          </div>
+          <div class="svc-card" data-svc="kubernetes">
+            <span class="svc-icon">☸️</span>
+            <div><div class="svc-name">Kubernetes</div><div class="svc-desc">EKS, GKE, AKS</div></div>
+          </div>
+          <div class="svc-card" data-svc="analytics">
+            <span class="svc-icon">📊</span>
+            <div><div class="svc-name">Analytics</div><div class="svc-desc">Redshift, BigQuery</div></div>
+          </div>
+          <div class="svc-card" data-svc="messaging">
+            <span class="svc-icon">📨</span>
+            <div><div class="svc-name">Messaging</div><div class="svc-desc">SQS, Pub/Sub, SB</div></div>
+          </div>
+          <div class="svc-card" data-svc="cache">
+            <span class="svc-icon">🚀</span>
+            <div><div class="svc-name">Cache</div><div class="svc-desc">ElastiCache, Redis</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Advanced config (shown when AI/ML or serverless selected) -->
+      <div id="advConfig" style="display:none;margin-top:16px;">
+        <label>Advanced Service Configuration</label>
+        <div class="adv-grid">
+          <div class="fg" id="ai-cfg" style="display:none;">
+            <label>AI Requests / Month</label>
+            <input id="ai_ml_requests" type="number" value="100000" />
+          </div>
+          <div class="fg" id="lambda-cfg" style="display:none;">
+            <label>Function Invocations / Month</label>
+            <input id="lambda_invocations" type="number" value="1000000" />
+          </div>
+          <div class="fg" id="k8s-cfg" style="display:none;">
+            <label>Kubernetes Nodes</label>
+            <input id="k8s_nodes" type="number" value="3" min="1" />
+          </div>
+          <div class="fg" id="analytics-cfg" style="display:none;">
+            <label>Data Processed (TB/month)</label>
+            <input id="analytics_tb" type="number" value="1" step="0.1" />
+          </div>
+          <div class="fg" id="msg-cfg" style="display:none;">
+            <label>Messages / Month</label>
+            <input id="messages_per_month" type="number" value="1000000" />
+          </div>
+          <div class="fg" id="cache-cfg" style="display:none;">
+            <label>Cache Size (GB)</label>
+            <input id="cache_gb" type="number" value="10" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Priorities -->
+      <div style="margin-top:20px;">
+        <label>Priorities</label>
+        <div class="tags">
+          <span class="tag active" data-v="cost">💰 Cost</span>
+          <span class="tag" data-v="reliability">🛡️ Reliability</span>
+          <span class="tag" data-v="performance">⚡ Performance</span>
+          <span class="tag" data-v="scalability">📈 Scalability</span>
+          <span class="tag" data-v="security">🔒 Security</span>
+        </div>
+      </div>
+
+      <button class="btn" id="analyzeBtn" onclick="analyze()" style="margin-top:24px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Analyze All Services
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="big-spin"></div>
+    <div style="font-family:'Google Sans',sans-serif;font-size:16px;font-weight:500;margin-bottom:8px;">Fetching live pricing across all providers…</div>
+    <div style="font-size:13px;color:var(--text2);">Running in parallel — usually takes 10–20 seconds</div>
+    <div class="step-list">
+      <div class="step-item" id="s0"><div class="sdot"></div>AWS Pricing API (Compute, RDS, S3, Lambda, EKS…)</div>
+      <div class="step-item" id="s1"><div class="sdot"></div>Azure Retail Pricing API (VMs, OpenAI, AKS…)</div>
+      <div class="step-item" id="s2"><div class="sdot"></div>GCP Public Pricelist (Vertex AI, GKE, BigQuery…)</div>
+      <div class="step-item" id="s3"><div class="sdot"></div>DigitalOcean API (Droplets, DOKS, Functions…)</div>
+      <div class="step-item" id="s4"><div class="sdot"></div>Oracle Cloud Pricing API</div>
+      <div class="step-item" id="s5"><div class="sdot"></div>Bedrock Claude — AI Architecture Analysis</div>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div id="errBox" class="err-box">
+    <span style="font-size:20px;">⚠️</span>
+    <div>
+      <div style="font-weight:500;color:var(--red);margin-bottom:4px;">Error</div>
+      <div style="font-size:13px;color:var(--red);" id="errText"></div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" style="display:none;">
+
+    <!-- Stats -->
+    <div class="stats" id="statsRow"></div>
+
+    <!-- Tabs -->
+    <div class="card gap">
+      <div class="card-b" style="padding-bottom:0;">
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('overview')">📊 Overview</div>
+          <div class="tab" onclick="switchTab('single')">🏆 Best Single Cloud</div>
+          <div class="tab" onclick="switchTab('multi')">🌐 Multi-Cloud Strategy</div>
+          <div class="tab" onclick="switchTab('services')">🔍 Service Winners</div>
+          <div class="tab" onclick="switchTab('table')">📋 Full Breakdown</div>
+        </div>
+      </div>
+
+      <div class="card-b">
+        <!-- Overview Tab -->
+        <div class="tab-panel active" id="tab-overview">
+          <div id="aiSummaryBox" style="padding:16px;background:var(--blue-l);border-radius:var(--r);margin-bottom:20px;font-size:14px;color:var(--text);line-height:1.6;"></div>
+          <div class="sec-label">☁️ Provider Cost Comparison</div>
+          <div class="p-grid" id="providerCards"></div>
+          <div style="margin-top:24px;">
+            <canvas id="costChart" height="90"></canvas>
+          </div>
+        </div>
+
+        <!-- Single Cloud Tab -->
+        <div class="tab-panel" id="tab-single">
+          <div id="singleCloudContent"></div>
+        </div>
+
+        <!-- Multi-Cloud Tab -->
+        <div class="tab-panel" id="tab-multi">
+          <div id="multiCloudContent"></div>
+        </div>
+
+        <!-- Service Winners Tab -->
+        <div class="tab-panel" id="tab-services">
+          <div id="serviceWinnersContent"></div>
+        </div>
+
+        <!-- Table Tab -->
+        <div class="tab-panel" id="tab-table">
+          <div style="overflow-x:auto;">
+            <table>
+              <thead>
+                <tr>
+                  <th style="text-align:left;">Provider</th>
+                  <th id="th-compute">Compute</th>
+                  <th id="th-database">Database</th>
+                  <th id="th-storage">Storage</th>
+                  <th id="th-cdn">CDN</th>
+                  <th id="th-ai_ml" style="display:none;">AI/ML</th>
+                  <th id="th-serverless" style="display:none;">Serverless</th>
+                  <th id="th-kubernetes" style="display:none;">Kubernetes</th>
+                  <th id="th-analytics" style="display:none;">Analytics</th>
+                  <th id="th-messaging" style="display:none;">Messaging</th>
+                  <th id="th-cache" style="display:none;">Cache</th>
+                  <th>Total/mo</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody id="pricingTable"></tbody>
+            </table>
+          </div>
+          <div id="failedNotice"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tips & Warnings -->
+    <div class="card gap">
+      <div class="card-h">💡 Optimization Tips & Warnings</div>
+      <div class="card-b" id="tipsContent"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+const API = "http://localhost:8000";
+let chart = null;
+let lastData = null;
+
+const SVC_LABELS = {compute:"Compute",database:"Database",storage:"Storage",cdn:"CDN",ai_ml:"AI/ML",serverless:"Serverless",kubernetes:"Kubernetes",analytics:"Analytics",messaging:"Messaging",cache:"Cache"};
+const SVC_ICONS  = {compute:"💻",database:"🗄️",storage:"📦",cdn:"🌐",ai_ml:"🤖",serverless:"⚡",kubernetes:"☸️",analytics:"📊",messaging:"📨",cache:"🚀"};
+const P_CONF = {
+  "AWS":          {icon:"🟠",light:"#fff3e0",color:"#e65100"},
+  "Azure":        {icon:"🔵",light:"#e3f2fd",color:"#0078d4"},
+  "GCP":          {icon:"🔴",light:"#fce4ec",color:"#c62828"},
+  "DigitalOcean": {icon:"🌊",light:"#e1f5fe",color:"#0277bd"},
+  "Oracle Cloud": {icon:"🔶",light:"#fff3e0",color:"#bf360c"},
+};
+
+// Service card toggle
+document.querySelectorAll('.svc-card').forEach(c => {
+  c.addEventListener('click', () => {
+    c.classList.toggle('active');
+    updateAdvConfig();
+  });
+});
+
+function updateAdvConfig() {
+  const sel  = getSelectedServices();
+  const show = sel.some(s => ["ai_ml","serverless","kubernetes","analytics","messaging","cache"].includes(s));
+  document.getElementById('advConfig').style.display = show ? 'block' : 'none';
+  const map = {ai_ml:"ai-cfg",serverless:"lambda-cfg",kubernetes:"k8s-cfg",analytics:"analytics-cfg",messaging:"msg-cfg",cache:"cache-cfg"};
+  for (const [svc, id] of Object.entries(map)) {
+    document.getElementById(id).style.display = sel.includes(svc) ? 'flex' : 'none';
+  }
+}
+
+// Priority tags
+document.querySelectorAll('.tag').forEach(t => t.addEventListener('click', () => t.classList.toggle('active')));
+
+function getSelectedServices() { return [...document.querySelectorAll('.svc-card.active')].map(c => c.dataset.svc); }
+function getPriorities()        { return [...document.querySelectorAll('.tag.active')].map(t => t.dataset.v); }
+function fmt(n)                 { return typeof n === 'number' ? n.toFixed(2) : (n || '—'); }
+
+// Tab switching
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', ['overview','single','multi','services','table'][i] === id));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tab-'+id));
+}
+
+// Loading animation
+let stepTimer = null;
+function startSteps() {
+  let i = 0;
+  document.querySelectorAll('.step-item').forEach(s => s.classList.remove('active','done'));
+  stepTimer = setInterval(() => {
+    if (i > 0) { const prev = document.getElementById('s'+(i-1)); if(prev){prev.classList.remove('active');prev.classList.add('done');} }
+    const cur = document.getElementById('s'+i);
+    if (cur) { cur.classList.add('active'); i++; } else clearInterval(stepTimer);
+  }, 2500);
+}
+function stopSteps() {
+  clearInterval(stepTimer);
+  document.querySelectorAll('.step-item').forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+}
+
+async function analyze() {
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spin"></div> Analyzing…';
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('errBox').style.display  = 'none';
+  startSteps();
+
+  const sel = getSelectedServices();
+  if (!sel.length) {
+    stopSteps();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errBox').style.display  = 'flex';
+    document.getElementById('errText').textContent   = 'Please select at least one service to compare.';
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Analyze All Services';
+    return;
+  }
+
+  const payload = {
+    app_type:               document.getElementById('app_type').value,
+    users:                  parseInt(document.getElementById('users').value),
+    storage_gb:             parseInt(document.getElementById('storage_gb').value),
+    database:               document.getElementById('database').value,
+    region:                 document.getElementById('region').value,
+    budget_usd:             parseFloat(document.getElementById('budget_usd').value),
+    priorities:             getPriorities(),
+    selected_services:      sel,
+    ai_ml_requests_per_month: parseInt(document.getElementById('ai_ml_requests')?.value || 100000),
+    lambda_invocations:       parseInt(document.getElementById('lambda_invocations')?.value || 1000000),
+    k8s_nodes:                parseInt(document.getElementById('k8s_nodes')?.value || 3),
+    analytics_tb:             parseFloat(document.getElementById('analytics_tb')?.value || 1),
+    messages_per_month:       parseInt(document.getElementById('messages_per_month')?.value || 1000000),
+    cache_gb:                 parseInt(document.getElementById('cache_gb')?.value || 10),
+  };
+
+  try {
+    const res = await fetch(`${API}/compare-costs`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail?.message || `HTTP ${res.status}`); }
+    const data = await res.json();
+    lastData = data;
+    stopSteps();
+    document.getElementById('loading').style.display = 'none';
+    render(data, payload);
+  } catch(e) {
+    stopSteps();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('errBox').style.display  = 'flex';
+    document.getElementById('errText').textContent   = e.message;
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg> Analyze All Services';
+  }
+}
+
+function render(data, req) {
+  const { pricing, ai_recommendation: ai, compute_tier, failed_providers, requirements } = data;
+  const sel    = requirements.selected_services || req.selected_services;
+  const best   = pricing[0];
+  const worst  = pricing[pricing.length-1];
+  const budget = requirements.budget_usd;
+
+  document.getElementById('results').style.display = 'block';
+
+  // ── Stats ──
+  const savings = worst.total_monthly_usd - best.total_monthly_usd;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat"><div class="stat-l">Best Monthly Cost</div><div class="stat-v c-green">$${fmt(best.total_monthly_usd)}</div><div class="stat-s">${best.provider}</div></div>
+    <div class="stat"><div class="stat-l">Max Savings</div><div class="stat-v c-blue">$${fmt(savings)}</div><div class="stat-s">vs ${worst.provider}</div></div>
+    <div class="stat"><div class="stat-l">Budget Status</div><div class="stat-v ${best.total_monthly_usd<=budget?'c-green':'c-red'}">${best.total_monthly_usd<=budget?'✅ Within':'⚠️ Over'}</div><div class="stat-s">Budget: $${fmt(budget)}/mo</div></div>
+    <div class="stat"><div class="stat-l">Services Compared</div><div class="stat-v c-blue">${sel.length}</div><div class="stat-s">${sel.map(s=>SVC_ICONS[s]).join(' ')}</div></div>
+  `;
+
+  // ── AI Summary ──
+  document.getElementById('aiSummaryBox').textContent = ai.summary || '';
+
+  // ── Provider Cards ──
+  const bst = ai.best_single_cloud?.provider || (pricing[0]?.provider);
+  const rnr = ai.second_best_single_cloud?.provider || (pricing[1]?.provider);
+  document.getElementById('providerCards').innerHTML = pricing.map(p => {
+    const c      = P_CONF[p.provider] || {icon:'☁️',light:'#f5f5f5',color:'#333'};
+    const isBest = p.provider === bst;
+    const isRun  = p.provider === rnr;
+    const rows   = sel.map(s => p[s] ? `<div class="p-row"><span>${SVC_ICONS[s]} ${SVC_LABELS[s]}</span><span>$${fmt(p[s].monthly_usd)}</span></div>` : `<div class="p-row"><span>${SVC_ICONS[s]} ${SVC_LABELS[s]}</span><span class="p-unavail">N/A</span></div>`).join('');
+    return `
+      <div class="p-card ${isBest?'best':isRun?'runner':''}">
+        <div class="p-badge ${isBest?'pb-best':isRun?'pb-runner':'pb-other'}">${isBest?'🏆 Best':isRun?'🥈 Runner Up':'–'}</div>
+        <div class="p-icon" style="background:${c.light}">${c.icon}</div>
+        <div class="p-name" style="color:${c.color}">${p.provider}</div>
+        <div class="p-price ${isBest?'c-green':''}">$${fmt(p.total_monthly_usd)}</div>
+        <div class="p-unit">/ month</div>
+        <div class="p-rows">${rows}</div>
+      </div>`;
+  }).join('');
+
+  // ── Chart ──
+  if (chart) chart.destroy();
+  const colors = ['#1a73e8','#a142f4','#137333','#f9ab00','#ea4335','#0078d4','#007b83','#e65100'];
+  const ctx = document.getElementById('costChart').getContext('2d');
+  chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: pricing.map(p => p.provider),
+      datasets: sel.map((s, i) => ({
+        label: SVC_LABELS[s],
+        data: pricing.map(p => p[s]?.monthly_usd || 0),
+        backgroundColor: colors[i % colors.length],
+      }))
+    },
+    options: {
+      responsive:true,
+      plugins:{legend:{labels:{color:'#5f6368',font:{family:'Roboto',size:12}}},tooltip:{callbacks:{label:c=>` ${c.dataset.label}: $${c.parsed.y.toFixed(2)}`}}},
+      scales:{
+        x:{stacked:true,ticks:{color:'#5f6368'},grid:{color:'#f1f3f4',drawBorder:false}},
+        y:{stacked:true,ticks:{color:'#5f6368',callback:v=>`$${v}`},grid:{color:'#f1f3f4',drawBorder:false}},
+      }
+    }
+  });
+
+  // ── Single Cloud Tab ──
+  const sc = ai.best_single_cloud || {};
+  const wa = sc.well_architected || {};
+  const waItems = Object.entries(wa).map(([k,v]) => `<div class="wa-item"><div class="wa-title">${k.replace(/_/g,' ')}</div><div class="wa-text">${v}</div></div>`).join('');
+  const scServices = Object.entries(sc.services || {}).filter(([k,v]) => v && sel.includes(k)).map(([k,v]) =>
+    `<div class="mc-service"><div class="mc-cat">${SVC_ICONS[k]} ${SVC_LABELS[k]}</div><div class="mc-body"><div class="mc-service-name">${v}</div></div></div>`
+  ).join('');
+
+  document.getElementById('singleCloudContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="font-size:40px;">${P_CONF[sc.provider]?.icon||'☁️'}</div>
+      <div>
+        <div style="font-family:'Google Sans',sans-serif;font-size:22px;font-weight:700;color:var(--green);">${sc.provider}</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text);">$${fmt(sc.monthly_cost)}<span style="font-size:14px;font-weight:400;color:var(--text2);"> / month</span></div>
+      </div>
+      <div style="margin-left:auto;text-align:right;">
+        <div class="badge badge-g">✅ Recommended</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:6px;">${sc.architecture_pattern||''}</div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;">${sc.reason||''}</p>
+    <div class="sec-label">🏗️ Service Stack</div>
+    ${scServices}
+    <div class="sec-label">📐 Well-Architected Framework</div>
+    <div class="wa-grid">${waItems}</div>
+    <div class="divider"></div>
+    <div style="font-size:13px;color:var(--text2);">
+      <strong style="color:var(--text);">🥈 Runner Up:</strong> ${ai.second_best_single_cloud?.provider} — $${fmt(ai.second_best_single_cloud?.monthly_cost)}/mo — ${ai.second_best_single_cloud?.reason||''}
+    </div>
+  `;
+
+  // ── Multi-Cloud Tab ──
+  const mc   = ai.multi_cloud_solution || {};
+  const mcSvcs = (mc.service_breakdown || []).map(s => {
+    const c = P_CONF[s.provider] || {icon:'☁️'};
+    return `<div class="mc-service">
+      <div class="mc-cat">${SVC_ICONS[s.category]||'☁'} ${SVC_LABELS[s.category]||s.category}</div>
+      <div class="mc-body">
+        <div class="mc-provider">${c.icon} ${s.provider}</div>
+        <div class="mc-service-name">${s.service}</div>
+        <div class="mc-why">${s.why_best}</div>
+      </div>
+      <div class="mc-cost">$${fmt(s.monthly_cost)}</div>
+    </div>`;
+  }).join('');
+
+  const benefits = (mc.benefits||[]).map(b => `<div class="tip"><span>✅</span>${b}</div>`).join('');
+  const risks    = (mc.risks||[]).map(r    => `<div class="tip warn"><span>⚠️</span>${r}</div>`).join('');
+
+  document.getElementById('multiCloudContent').innerHTML = `
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+      <div style="font-size:36px;">🌐</div>
+      <div>
+        <div style="font-family:'Google Sans',sans-serif;font-size:20px;font-weight:700;">Multi-Cloud Strategy</div>
+        <div style="font-size:24px;font-weight:700;color:var(--blue);">$${fmt(mc.total_monthly_cost)}<span style="font-size:14px;font-weight:400;color:var(--text2);"> / month estimated</span></div>
+      </div>
+    </div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.6;">${mc.strategy||''}</p>
+    <div class="sec-label">🔀 Best Provider Per Service</div>
+    ${mcSvcs}
+    <div class="divider"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+      <div><div class="sec-label" style="margin-top:0;">✅ Benefits</div>${benefits}</div>
+      <div><div class="sec-label" style="margin-top:0;">⚠️ Risks</div>${risks}</div>
+    </div>
+  `;
+
+  // ── Service Winners Tab ──
+  const sw = ai.service_winners || [];
+  const swHtml = sw.length ? sw.map(w => {
+    const c = P_CONF[w.winner] || {icon:'☁️'};
+    return `<div class="sw-item">
+      <div class="sw-cat">${SVC_ICONS[w.category]||''} ${SVC_LABELS[w.category]||w.category}</div>
+      <div style="flex:1;">
+        <div class="sw-win">${c.icon} ${w.winner} — $${fmt(w.winner_cost)}/mo</div>
+        <div class="sw-insight">${w.insight}</div>
+      </div>
+      <div class="sw-cost" style="color:var(--text2);font-size:12px;">vs ${w.runner_up}</div>
+    </div>`;
+  }).join('') : `<p style="color:var(--text2);font-size:13px;">Select more services and run AI analysis to see per-service winners.</p>`;
+
+  document.getElementById('serviceWinnersContent').innerHTML = `
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px;">Best provider for each service category based on cost + AI analysis.</p>
+    ${swHtml}
+  `;
+
+  // ── Table Tab ──
+  // Show/hide columns based on selected services
+  const allSvcs = ['compute','database','storage','cdn','ai_ml','serverless','kubernetes','analytics','messaging','cache'];
+  allSvcs.forEach(s => {
+    const th = document.getElementById('th-'+s);
+    if (th) th.style.display = sel.includes(s) ? '' : 'none';
+  });
+
+  document.getElementById('pricingTable').innerHTML = pricing.map(p => {
+    const isBest = p.provider === bst;
+    const c      = P_CONF[p.provider] || {icon:'☁️'};
+    const isLive = p.compute?.source?.toLowerCase().includes('live');
+    const cells  = allSvcs.map(s => `<td style="${sel.includes(s)?'':'display:none;'}">${p[s] ? '$'+fmt(p[s].monthly_usd) : '<span style="color:var(--hint)">N/A</span>'}</td>`).join('');
+    return `<tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;font-weight:${isBest?'600':'400'};color:${isBest?'var(--green)':'var(--text)'};">
+          ${c.icon} ${p.provider}
+          ${isBest?'<span class="badge badge-g" style="font-size:10px;">Best</span>':''}
+        </div>
+      </td>
+      ${cells}
+      <td class="td-total ${isBest?'c-green':''}">$${fmt(p.total_monthly_usd)}</td>
+      <td><span class="chip ${isLive?'chip-live':'chip-pub'}"><div class="dot ${isLive?'dot-g':'dot-y'}"></div>${isLive?'Live API':'Published'}</span></td>
+    </tr>`;
+  }).join('');
+
+  if (failed_providers && Object.keys(failed_providers).length) {
+    document.getElementById('failedNotice').innerHTML = `<div class="failed-notice">⚠️ Could not fetch: ${Object.keys(failed_providers).join(', ')}</div>`;
+  }
+
+  // ── Tips & Warnings ──
+  const tips  = (ai.optimization_tips||[]).map(t => `<div class="tip"><span>✅</span>${t}</div>`).join('');
+  const warns = (ai.warnings||[]).filter(w => !w.toLowerCase().includes('fallback')).map(w => `<div class="tip warn"><span>⚠️</span>${w}</div>`).join('');
+  document.getElementById('tipsContent').innerHTML = tips + (warns ? '<div class="divider"></div>' + warns : '');
+
+  document.getElementById('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+</script>
+</body>
+</html>

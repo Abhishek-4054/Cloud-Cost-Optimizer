@@ -1,0 +1,1 @@
+from .bedrock_agent import get_ai_recommendation, get_service_recommendation
