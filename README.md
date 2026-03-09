@@ -28,3 +28,50 @@ Then in another terminal:
 powershellcd "C:\...\v2\frontend"
 python -m http.server 3000
 >>>>>>>>>>>>>
+
+
+**create .env file also :**
+....................................................................... start ....................................................................................
+# ============================================================
+# Cloud Cost Optimizer — Environment Configuration
+# 1. Copy this file:  cp .env.example .env
+# 2. Fill in your values below
+# 3. Never commit .env to git
+# ============================================================
+
+# ── AWS ──────────────────────────────────────────────────────
+AWS_ACCESS_KEY_ID="your key"
+AWS_SECRET_ACCESS_KEY="your key "
+AWS_DEFAULT_REGION=ap-south-1
+
+# ── Amazon Bedrock (AI reasoning) ────────────────────────────
+BEDROCK_REGION=ap-south-1
+BEDROCK_MODEL_ID=anthropic.claude-3-haiku-20240307-v1:0
+
+# ── Azure (no auth needed — public API) ──────────────────────
+AZURE_REGION=southindia
+
+# ── GCP (no auth needed — public catalog) ────────────────────
+GCP_REGION=asia-south1
+
+# ── DigitalOcean (no auth needed) ────────────────────────────
+DO_REGION=blr1
+
+# ── App ──────────────────────────────────────────────────────
+APP_PORT=8000
+CORS_ORIGINS=http://localhost:3000,http://localhost:5173,http://localhost:5678
+
+
+..........................................................  end ............................................................................
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>  .**gitignore** >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+__pycache__/
+*.pyc
+.env
+*.pyc
+.pycache/
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> end >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
